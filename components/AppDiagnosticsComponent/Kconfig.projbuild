@@ -1,0 +1,18 @@
+menu "App Diagnostics settings"
+    config KEEP_ALIVE_INTERVAL_MINUTES
+        int "Keep alive MQTT inteval in minutes"
+        default 1
+        help
+            Amount of minutes between a MQTT keep alive message.
+    config LOGGING_INTERVAL_MINUTES
+        int "Logging MQTT inteval in minutes"
+        default 10
+        help
+            Amount of minutes between a MQTT logging message.
+
+    config PRINT_ERROR_MESSAGE
+        bool "Print error messages in terminal: handy for debugging"
+        default y
+        help
+            This allows you to print or skip error message printing in terminal.
+endmenu

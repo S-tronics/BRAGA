@@ -1,0 +1,49 @@
+menu "App MQTT Config"
+    config BROKER_URL
+        string "Broker URL"
+        default "mqtt://ecec22b4c20f44b0b02f4011523b1c1c.s1.eu.hivemq.cloud"
+        help
+            URL of the broker to connect to
+    
+    config CONFIG_TOPIC
+        string "Config Topic"
+        default "BRAGA/CONFIG"
+        help
+            Config topic, used for configuring the stairs "/*MAC-ADRESS*" will be appended to the topic.
+
+    config CONTROL_TOPIC
+        string "Control Topic"
+        default "BRAGA/CONTROL"
+        help
+            Control topic, used for directing the stairs. "/*MAC-ADRESS*" will be appended to the topic.
+
+    config LOGGING_TOPIC
+        string "Logging Topic"
+        default "BRAGA/LOGGING"
+        help
+            Logging topic, used for diagnostic purposes. "/*MAC-ADRESS*" will be appended to the topic. 
+
+    config ERROR_TOPIC
+        string "Error Topic"
+        default "BRAGA/ERROR"
+        help
+            Error topic, used for critical diagnostic messages. "/*MAC-ADRESS*" will be appended to the topic. 
+    
+    config OTA_TOPIC
+        string "Over The Air Topic"
+        default "BRAGA/OTA"
+        help
+            OTA topic, used letting the ESP32s3 know the .bin URL. "/*MAC-ADRESS*" will be appended to the topic.
+
+    config DIAGNOSTICS_TOPIC
+        string "Diagnostics Topic"
+        default "BRAGA/DIAGNOSTICS"
+        help
+            Diagnostics topic, used for keep-alive and logging. "/*MAC-ADRESS*" will be appended to the topic.
+
+    config SETUP_TOPIC
+        string "Setup Topic"
+        default "BRAGA/SETUP"
+        help
+            Setup topic, used for initialization of stairs. "/*MAC-ADRESS*" will be appended to the topic.
+endmenu

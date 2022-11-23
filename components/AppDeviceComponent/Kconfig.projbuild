@@ -1,0 +1,29 @@
+menu "App Device settings"
+	config BRAGA_GPIO_RED
+        int "GPIO for led red"
+        range 0 34 if IDF_TARGET_ESP32
+        range 0 46 if IDF_TARGET_ESP32S2
+        range 0 48 if IDF_TARGET_ESP32S3
+        range 0 19 if IDF_TARGET_ESP32C3
+        default 7
+        help
+            GPIO number for BRAGA Red Led
+    config BRAGA_GPIO_GREEN
+        int "GPIO for led green"
+        range 0 34 if IDF_TARGET_ESP32
+        range 0 46 if IDF_TARGET_ESP32S2
+        range 0 48 if IDF_TARGET_ESP32S3
+        range 0 19 if IDF_TARGET_ESP32C3
+        default 15
+        help
+            GPIO number for BRAGA Green Led
+    config BRAGA_GPIO_BLUE
+        int "GPIO for led blue"
+        range 0 34 if IDF_TARGET_ESP32
+        range 0 46 if IDF_TARGET_ESP32S2
+        range 0 48 if IDF_TARGET_ESP32S3
+        range 0 19 if IDF_TARGET_ESP32C3
+        default 6
+    help
+            GPIO number for BRAGA Blue Led      
+endmenu
