@@ -87,6 +87,13 @@ void AppSciInit(void);
  *
  *
  */
+bool AppSciSetupStair(uint8_t stair_number);
+
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
 void AppSciPxStartUp(void);
 /**
  * @brief   Tick function for giving this task module a time base.

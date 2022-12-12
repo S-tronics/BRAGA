@@ -37,7 +37,9 @@ typedef enum PROCEDURES
 {
     START_INSTALLATION = 1,
     LED_CONNECTED = 2,
-    STOP_INSTALLATION = 4
+    MUI_RECEIVED = 3,
+    STOP_INSTALLATION = 4,
+    ERROR = 5
 } PROCEDURE;
 /**********************************************************************************************************************/
 
@@ -63,8 +65,9 @@ void AppSetup_reset_installation();
  *
  * @param   stair_number    The stair number that will be sent in JSON
  * @param   p               The procedure that will be sent in JSON, see PROCEDURE enum
+ * @param   value           Some value to send with the message
  */
-void AppSetup_setup_message(int stair_number, PROCEDURE p);
+void AppSetup_setup_message(int stair_number, PROCEDURE p, uint8_t value);
 /**********************************************************************************************************************/
 
 /***********************************************************************************************************************

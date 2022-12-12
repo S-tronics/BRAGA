@@ -1,11 +1,11 @@
 /**********************************************************************************************************************/
 /**
- * @file        AppDiagnosticsComponent.h
+ * @file        DrvI2c.h
  *
  * @author      Stijn Vermeersch
- * @date        06.07.2022
+ * @date        14.06.2022
  *
- * @brief
+ * @brief       
  *
  *
  *
@@ -15,63 +15,85 @@
  * \n<hr>\n
  */
 /**********************************************************************************************************************/
-#ifndef AppDiagnosticsComponent_H
-#define AppDiagnosticsComponent_H
+#ifndef DRVI2C_H
+#define DRVI2C_H
 /**********************************************************************************************************************/
+
+
 
 /***********************************************************************************************************************
 ; I N C L U D E S
 ;---------------------------------------------------------------------------------------------------------------------*/
-#include <stdio.h>
-#include <string.h>
-#include <stddef.h>
-#include <stdlib.h>
-
-#include <stdbool.h>
 
 /**********************************************************************************************************************/
+
+
 
 /***********************************************************************************************************************
 ; E X P O R T E D   S Y M B O L   D E F I N I T I O N S   A N D   M A C R O S
 ;---------------------------------------------------------------------------------------------------------------------*/
 /**********************************************************************************************************************/
 
+
+
 /***********************************************************************************************************************
 ; E X P O R T E D   T Y P E D E F S
 ;---------------------------------------------------------------------------------------------------------------------*/
-typedef enum DIRECTIONS
-{
-    DOWN,
-    UP,
-} DIRECTION;
+
 /**********************************************************************************************************************/
+
+
 
 /***********************************************************************************************************************
 ; E X P O R T E D   V A R I A B L E S
 ;---------------------------------------------------------------------------------------------------------------------*/
 /**********************************************************************************************************************/
 
+
+
 /***********************************************************************************************************************
 ; E X P O R T E D   F U N C T I O N   P R O T O T Y P E S
 ;---------------------------------------------------------------------------------------------------------------------*/
-void AppDiagnostics_init();
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
+void DrvI2cInit(void);
 
-void AppDiagnostics_stairstaken_add();
+/**
+ * @brief   Write a byte over I2C-bus to the selected I2C-register
+ *
+ */
+void esp_err_t DrvI2cWriteByte(uint8_t slaveaddress, uint16_t reg, uint8_t data);
 
-void AppDiagnostics_stair_detection_message(DIRECTION d);
+/**
+ * @brief   Write an array of data over I2c-bis to the selected I2C-register 
+ *
+ */
+void esp_err_t DrvI2cReadByte(uint8_t slaveaddress, uint16_t reg, uint8_t* data);
 
-void AppDiagnostics_error_message(char *error_message);
+/**
+ * @brief   Write an array of data over I2c-bus to the selected I2C-register 
+ *
+ */
+void esp_err_t DrvI2cWriteData(uint8_t slaveaddress, uint16_t start_reg, uint8_t* data, uint8_t length);
 
-void AppDiagnostics_SetLimitsCurrent(uint16_t upperlimit, uint16_t lowerlimit);
+/**
+ * @brief   Read an array of data over I2C-bus to the selected I2c-register
+ *
+ */
+void esp_err_t DrvI2cReadData(uint8_t slaveaddress, uint16_t start_reg, uint8_t* data, uint8_t length);
 
-void AppDiagnostics_SetLimitsVoltage(uint16_t upperlimit, uint16_t lowerlimit);
-
-bool AppDiagnostics_PeripheralsFast(void);
 /**********************************************************************************************************************/
+
+
 
 /***********************************************************************************************************************
 ; E X P O R T E D   S T A T I C   I N L I N E   F U N C T I O N S
 ;---------------------------------------------------------------------------------------------------------------------*/
 /**********************************************************************************************************************/
 
-#endif /* AppDiagnosticsComponent_H */
+
+
+#endif /* DRVI2C_H */

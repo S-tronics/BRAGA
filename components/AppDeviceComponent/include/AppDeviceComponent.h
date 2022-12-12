@@ -22,7 +22,12 @@
 /***********************************************************************************************************************
 ; I N C L U D E S
 ;---------------------------------------------------------------------------------------------------------------------*/
+#include <stdio.h>
+#include <string.h>
+#include <stddef.h>
+#include <stdlib.h>
 
+#include <stdbool.h>
 /**********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -95,6 +100,27 @@ int AppDevice_compare_hardware_version_device(const char *version);
  * @param color   color defined by enum RED, GREEN, BLUE
  */
 void AppDevice_SetLed(LED_COLOR color);
+
+/**
+ * @brief Control the voltage of the RS485-bus
+ *
+ * @param onoff   true: voltage enabled | false: voltage disabled
+ */
+void AppDevice_CtrlPeripheral(bool onoff);
+
+/**
+ * @brief Measured the current towards the RS485-bus
+ *
+ * @return  the value of the measured current towards the RS485-bus
+ */
+uint16_t AppDevice_GetCurrentValue(void);
+
+/**
+ * @brief Measured the voltage on the RS485-bus
+ *
+ * @return  the value of the measured voltage on the RS485-bus
+ */
+uint16_t AppDevice_GetVoltageValue(void);
 /**********************************************************************************************************************/
 
 /***********************************************************************************************************************

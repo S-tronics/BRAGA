@@ -315,7 +315,6 @@ void AppParser_parse_setup(char *json_string)
 
         switch (stair_procedure->valueint) // TODO: Implement stair procedures
         {
-
         case 1:
             ESP_LOGI(TAG, "Stair procedure: 1 - Stair procedure 1");
             break;

@@ -1,11 +1,11 @@
 /**********************************************************************************************************************/
 /**
- * @file        AppSetupComponent.c
+ * @file        AppTemplate.c
  *
  * @author      Stijn Vermeersch
- * @date        24.05.2022
+ * @date        17.05.2022
  *
- * @brief
+ * @brief       
  *
  *
  * \n<hr>
@@ -17,6 +17,8 @@
 
 /**********************************************************************************************************************/
 
+
+
 /***********************************************************************************************************************
 ; V E R I F Y    C O N F I G U R A T I O N
 ;---------------------------------------------------------------------------------------------------------------------*/
@@ -25,35 +27,47 @@
 
 /**********************************************************************************************************************/
 
+
+
 /***********************************************************************************************************************
 ; I N C L U D E S
 ;---------------------------------------------------------------------------------------------------------------------*/
 #include <stdio.h>
-#include <stdint.h>
-#include <stddef.h>
 #include <string.h>
-
-#include "esp_log.h"
-#include "sdkconfig.h"
-#include "cJSON.h"
-#include "AppSetupComponent.h"
-#include "AppMQTTComponent.h"
-#include "AppDeviceComponent.h"
-#include "AppBluetooth.h"
-#include "AppSciComponent.h"
-#include "AppDiagnosticsComponent.h"
-
+#include <stdlib.h>
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "freertos/semphr.h"
-#include "freertos/queue.h"
+#include "driver/gpio.h"
+#include "esp_system.h"
+#include "esp_log.h"
+#include "sdkconfig.h"
+//Only for debug reasons
+
+//DRIVER lib include section
+
+//STANDARD lib include section
+//APPLICATION lib include section
+#include "AppEepromComponent.h"
 /**********************************************************************************************************************/
+
+
 
 /***********************************************************************************************************************
 ; L O C A L   D E F I N I T I O N S   A N D   M A C R O S
 ;---------------------------------------------------------------------------------------------------------------------*/
-
+#define ADDR_SSID                   0x0000
+#define ADDR_PASSW                  0x0020
+#define ADDR_STAIRSTAKEN            0x0040
+#define ADDR_OVERCURRENT            0x0100
+#define ADDR_UNDERCURRENT           0x0104
+#define ADDR_OVERVOLTAGE            0x0108
+#define ADDR_UNDERVOLTAGE           0x010A
+#define ADDR_CONFIG                 0x0200
+#define ADDR_NBR_STAIRS             0x0201
+#define ADDR_STAIRS_CONFIG_START    0x0202
 /**********************************************************************************************************************/
+
+
 
 /***********************************************************************************************************************
 ; L O C A L   T Y P E D E F S
@@ -61,20 +75,30 @@
 
 /**********************************************************************************************************************/
 
+
+
 /***********************************************************************************************************************
 ; L O C A L   F U N C T I O N   P R O T O T Y P E S
 ;---------------------------------------------------------------------------------------------------------------------*/
 
 /**********************************************************************************************************************/
 
+
+
 /***********************************************************************************************************************
 ; L O C A L   V A R I A B L E S
 ;---------------------------------------------------------------------------------------------------------------------*/
-static const char *TAG = "Setup Component";
-static uint8_t stair_number_latch = 0;          //0 is an unvalid value.
+static const char *TAG = "BRAGA EEPROM";
 
-static TaskHandle_t xHandleSetup;
+static uint32_t stairstaken = 0;
+static uint32_t overcurrent = 0;
+static uint32_t undercurrent = 0;
+static uint32_t overvoltage = 0;
+static uint32_t undervoltage = 0;
+
 /**********************************************************************************************************************/
+
+
 
 /***********************************************************************************************************************
 ; E X P O R T E D   V A R I A B L E S
@@ -82,91 +106,112 @@ static TaskHandle_t xHandleSetup;
 
 /**********************************************************************************************************************/
 
+
+
 /***********************************************************************************************************************
 ; L O C A L   F U N C T I O N S
 ;---------------------------------------------------------------------------------------------------------------------*/
-static void setuptask(void *arg)
-{
 
-    if(AppSciSetupStair(stair_number_latch))
-    {
-        AppSetup_setup_message(stair_number_latch, MUI_RECEIVED, 0);
-        vTaskDelete(xHandleSetup);
-    }
-    else if (AppDiagnostics_PeripheralsFast())
-    {
-        AppSetup_setup_message(stair_number_latch, ERROR, 1);
-        vTaskDelete(xHandleSetup);
-    }
-    
-}
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 /**********************************************************************************************************************/
+
+
 
 /***********************************************************************************************************************
 ; E X P O R T E D   F U N C T I O N S
 ;---------------------------------------------------------------------------------------------------------------------*/
-void AppSetup_init(void)
+void appeeprom_init(void)
 {
-    
+    esp_log_level_set(TAG, ESP_LOG_INFO);
+    ESP_LOGI(TAG, "Init Eeprom");
+
+
+
+    ESP_LOGI(TAG, "Init Eeprom");
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
-void AppSetup_setup_message(int stair_number, PROCEDURE p, uint8_t value)
+void appeeprom_write_wifiSSID(const char* ssid)
 {
-    char *out;
+    uint8_t length = strlen(ssid);
 
-    cJSON *root;
-    cJSON *device;
-
-    char device_unique[25];
-    AppDevice_get_unique(device_unique);
-
-    root = cJSON_CreateObject();
-    device = cJSON_CreateObject();
-
-    cJSON_AddItemToObject(root, "message_type", cJSON_CreateString("setupevent"));
-    cJSON_AddItemToObject(device, "unique", cJSON_CreateString(device_unique));
-    //cJSON_AddItemToObject(device, "software_version", cJSON_CreateString(CONFIG_SOFTWARE_VERSION));
-    //cJSON_AddItemToObject(device, "hardware_version", cJSON_CreateString(CONFIG_HARDWARE_VERSION));
-    cJSON_AddItemToObject(root, "device", device);
-    cJSON_AddItemToObject(root, "stair_number", cJSON_CreateNumber(stair_number));
-    cJSON_AddItemToObject(root, "stair_procedure", cJSON_CreateNumber(p));
-    cJSON_AddItemToObject(root, "value", cJSON_CreateNumber(value));
-
-    out = cJSON_Print(root);
-    //AppMQTT_client_publish_diagnostics(out, 2, 0);
-    AppBTLE_server_publish_setup(out);
-     /* free all objects under root and root itself */
-    free(out);
-    cJSON_Delete(root);
+    stdeeprom_write_data(ADDR_SSID, ssid, length);
+    ESP_LOGI(TAG, "EEprom Store: SSID: %d", length);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
-void AppSetup_execute(int stair_number, PROCEDURE p)            //Command from Client
+void appeeprom_write_wifipassword(const char* passwrd)
 {
-    switch(p)
-    {
-        case START_INSTALLATION:
-            break;
-        case LED_CONNECTED:
-            AppDevice_CtrlPeripheral(true);
-            ets_delay_us(500);                  //Wait until everything is startet up
-            xTaskCreate(setuptask, "setuptask", 4096, NULL, 10, &xHandleSetup);
-            stair_number_latch = stair_number;
-            break;
-        case STOP_INSTALLATION:
-            break;
-        default:
-            break;
-    }
+    uint8_t length = strlen(ssid);
+
+    stdeeprom_write_data(ADDR_PASSW, passwrd, length);
+    ESP_LOGI(TAG, "EEprom Store: PASSWRD: %d", length);
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+void appeeprom_write_stairstaken(uint32_t stairs_taken)
+{
+    static uint8_t r_data[4];
+    //StdEepromReadData(ADDR_STAIRSTAKEN, r_data, sizeof(r_data));
+    //stairstaken = (r_data[0] << 24) | (r_data[1] << 16) | (r_data[2] << 8) | r_data[3];
+    //stairstaken++;
+    r_data[0] = (uint8_t)(stairstaken >> 24);
+    r_data[1] = (uint8_t)(stairstaken >> 16);
+    r_data[2] = (uint8_t)(stairstaken >> 8);
+    r_data[3] = (uint8_t)(stairstaken & 0x000000FF);
+    stdeeprom_write_data(ADDR_STAIRSTAKEN, r_data, sizeof(r_data));
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+void appeeprom_write_configdone(CONFIG_DONE config)
+{
+    static uint8_t r_data = 0;
+    stdeeprom_read_byte(ADDR_CONFIG, &r_data);
+    r_data |= (1 << (uint8_t)config);
+    stdeeprom_write_byte(ADDR_CONFIG, &r_data);
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+void appeeprom_write_nbrofstairs(uint8_t stairs)
+{
+    stdeeprom_write_byte(ADDR_NBR_STAIRS, &stairs);
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+void appeeprom_increment_overcurrent(void)
+{
+    static uint8_t r_data[4];
+    stdeeprom_read_data(ADDR_OVERCURRENT, r_data, sizeof(r_data));
+    overcurrent = (r_data[0] << 24) | (r_data[1] << 16) | (r_data[2] << 8) | r_data[3];
+    overcurrent++;
+    r_data[0] = (uint8_t)(overcurrent >> 24);
+    r_data[1] = (uint8_t)(overcurrent >> 16);
+    r_data[2] = (uint8_t)(overcurrent >> 8);
+    r_data[3] = (uint8_t)(overcurrent & 0x000000FF);
+    stdeeprom_write_data(ADDR_OVERCURRENT, r_data, sizeof(r_data));
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+void appeeprom_increment_undercurrent(void)
+{
+    static uint8_t r_data[4];
+    stdeeprom_read_data(ADDR_UNDERCURRENT, r_data, sizeof(r_data));
+    undercurrent = (r_data[0] << 24) | (r_data[1] << 16) | (r_data[2] << 8) | r_data[3];
+    undercurrent++;
+    r_data[0] = (uint8_t)(undercurrent >> 24);
+    r_data[1] = (uint8_t)(undercurrent >> 16);
+    r_data[2] = (uint8_t)(undercurrent >> 8);
+    r_data[3] = (uint8_t)(undercurrent & 0x000000FF);
+    stdeeprom_write_data(ADDR_UNDERCURRENT, r_data, sizeof(r_data));
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+
+/*--------------------------------------------------------------------------------------------------------------------*/
+void appeeprom_read_params(void)
+{
 
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
-void AppSetup_reset_installation()
-{
-    // TODO: reset installation
-    ESP_LOGI(TAG, "Reset installation");
-}
+
 /**********************************************************************************************************************/
+

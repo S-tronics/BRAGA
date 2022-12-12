@@ -1,0 +1,20 @@
+menu "DRV I2C-communication Settings"
+    config BRAGA_I2C_MASTER_SCL
+        int "SCL of I2C-communication"
+        range 0 34 if IDF_TARGET_ESP32
+        range 0 46 if IDF_TARGET_ESP32S2
+        range 0 48 if IDF_TARGET_ESP32S3
+        range 0 19 if IDF_TARGET_ESP32C3
+        default 9
+        help
+            SCL of I2C-communication
+    config BRAGA_I2C_MASTER_SDA
+        int "SDA of I2C-communication"
+        range 0 34 if IDF_TARGET_ESP32
+        range 0 46 if IDF_TARGET_ESP32S2
+        range 0 48 if IDF_TARGET_ESP32S3
+        range 0 19 if IDF_TARGET_ESP32C3
+        default 10
+        help
+            SDA of I2C-communication
+endmenu

@@ -247,8 +247,6 @@ void AppMQT_client_Init()
         .cert_pem = (const char*)server_pem_start,
     };
 
-
-
     //mqtts:///username:password@xxxxxxxx.s2.eu.hivemq.cloud:8883
 
     client = esp_mqtt_client_init(&mqtt_cfg);

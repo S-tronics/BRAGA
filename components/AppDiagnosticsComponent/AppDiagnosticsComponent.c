@@ -33,6 +33,8 @@
 #include <stddef.h>
 #include <string.h>
 
+
+
 #include "esp_log.h"
 #include "sdkconfig.h"
 #include "AppDiagnosticsComponent.h"
@@ -55,7 +57,16 @@
 /***********************************************************************************************************************
 ; L O C A L   T Y P E D E F S
 ;---------------------------------------------------------------------------------------------------------------------*/
-
+typedef struct
+{
+    bool  valid_data;
+    bool  valid_limits;
+    bool  check_limit;
+    uint16_t value;                 //Value in thousands of a SI-Unit
+    uint16_t upperlimit;            //Value in thousands of a SI-Unit
+    uint16_t lowerlimit;            //Value in thousands of a SI-Unit
+}
+DIAGNOSTIC_VALUE;
 /**********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -69,6 +80,8 @@
 ;---------------------------------------------------------------------------------------------------------------------*/
 static const char *TAG = "Diagnostics Component";
 int stairstaken = 0;
+static DIAGNOSTIC_VALUE diag_current;
+static DIAGNOSTIC_VALUE diag_voltage;
 /**********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -129,6 +142,7 @@ static void AppDiagnostics_device_logging_task(void *arg)
     {
         cJSON *root;
         char *out;
+
         root = cJSON_CreateObject();
         cJSON_AddItemToObject(root, "message_type", cJSON_CreateString("logging"));
 
@@ -165,7 +179,48 @@ static void AppDiagnostics_device_logging_task(void *arg)
 }
 
 /*--------------------------------------------------------------------------------------------------------------------*/
-
+static void AppDiagnostics_device_meas_task(void *arg)
+{
+    while(1)
+    {
+        //For Current
+        diag_current.value = AppDevice_GetCurrentValue();
+        if(diag_current.check_limit)
+        {
+            if(diag_current.value > diag_current.upperlimit)
+            {
+                //Shortcut
+                diag_current.check_limit = false;
+                AppDevice_CtrlPeripheral(false);
+                ESP_LOGE(TAG, "RS485 Current error (shortcut): %d > %d", diag_current.value, diag_current.upperlimit);
+            }    
+            else if(diag_current.value < diag_current.lowerlimit)
+            {
+                //Open
+                diag_current.check_limit = false;
+                AppDevice_CtrlPeripheral(false);
+                ESP_LOGE(TAG, "RS485 Current error (open): %d < %d", diag_current.value, diag_current.lowerlimit);
+            }
+        }
+        //For Voltage
+        diag_voltage.value = AppDevice_GetVoltageValue();
+        if(diag_voltage.check_limit)
+        {
+            if(diag_voltage.value > diag_voltage.upperlimit)
+            {
+                diag_voltage.check_limit = false;
+                AppDevice_CtrlPeripheral(false);
+            }
+            else if(diag_voltage.value < diag_voltage.lowerlimit)
+            {
+                diag_voltage.check_limit = false;
+                AppDevice_CtrlPeripheral(false);
+            }
+        }
+    }
+    //1000ms = 1 second
+    vTaskDelay((CONFIG_MEAS_INTERVAL_SECONDS * 1000) / portTICK_RATE_MS);
+}
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 /**********************************************************************************************************************/
@@ -180,6 +235,9 @@ void AppDiagnostics_init()
     xTaskCreate(AppDiagnostics_device_keep_alive_task, "AppDiagnostics_device_keep_alive_task", 4096, NULL, 10, NULL);
     xTaskCreate(AppDiagnostics_free_ram_task, "AppDiagnostics_device_keep_alive_task", 4096, NULL, 10, NULL);
     xTaskCreate(AppDiagnostics_device_logging_task, "AppDiagnostics_device_logging_task", 4096, NULL, 10, NULL);
+    xTaskCreate(AppDiagnostics_device_meas_task, "AppDiagnostics_device_meas.task", 4096, NULL, 10, NULL);
+    AppDiagnostics_SetLimitsCurrent(CONFIG_CURRENT_UPPER_LIMIT, CONFIG_CURRENT_LOWER_LIMIT);
+    AppDiagnostics_SetLimitsVoltage(CONFIG_VOLTAGE_UPPER_LIMIT, CONFIG_VOLTAGE_LOWER_LIMIT);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 void AppDiagnostics_stair_detection_message(DIRECTION d)
@@ -247,4 +305,32 @@ void AppDiagnostics_error_message(char *error_message)
     free(out);
     cJSON_Delete(root);
 }
+/*--------------------------------------------------------------------------------------------------------------------*/
+void AppDiagnostics_SetLimitsCurrent(uint16_t upperlimit, uint16_t lowerlimit)
+{
+    diag_current.upperlimit = upperlimit;
+    diag_current.lowerlimit = lowerlimit;
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+void AppDiagnostics_SetLimitsVoltage(uint16_t upperlimit, uint16_t lowerlimit)
+{
+    diag_voltage.upperlimit = upperlimit;
+    diag_voltage.lowerlimit = lowerlimit;
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+bool AppDiagnostics_PeripheralsFast(void)
+{
+    diag_current.value = AppDevice_GetCurrentValue();
+    diag_voltage.value = AppDevice_GetVoltageValue();
+    if((diag_current.value > diag_current.upperlimit)||(diag_current.value < diag_current.lowerlimit))
+    {
+        return false;
+    }
+    if((diag_voltage.value > diag_voltage.upperlimit)||(diag_voltage.value < diag_voltage.lowerlimit))
+    {
+        return false;
+    }
+    return true;
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
 /**********************************************************************************************************************/

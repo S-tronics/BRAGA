@@ -35,6 +35,7 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "freertos/queue.h"
+#include "freertos/timers.h"
 #include "esp_system.h"
 #include "nvs_flash.h"
 #include "driver/uart.h"
@@ -116,12 +117,15 @@ static const char *TAG = "Sci Component";
 const int uart_num = UART_PORT;
 // static APPSCISTAIR stairs[MAX_NBR_STAIRS];
 static uint8_t nbrofstairs = 0;
+static uint8_t idx_setupstair = 0;
 static uint8_t data[BUF_SIZE];
 static QueueHandle_t uart_queue;
 
 int CAN_SEND_VLAG = 0;
 
 xQueueHandle xQueue;
+
+
 /**********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -182,6 +186,19 @@ static void uart_read_task(void *arg)
         {
             data[len] = '\0';
             print_hex("Ontvangen: ", data, len);
+
+            switch(data[0])
+            {
+                case MUX_PUBLISH:
+                    stairs[idx_setupstair].config = true;
+                    for(int i = 1; i <= 9; i++)
+                    {
+                        stairs[idx_setupstair].publishconfirm.mui[i-1] = data[i];
+                    }
+                    break;
+                default:
+                    break;
+            }
 
             // Quick and dirty test
             if (data[0] == MUX_PUBLISH)
@@ -391,6 +408,7 @@ static void uart_write_white_task(void *arg)
 static void uart_write_px_get(void *arg)
 {
     bus_message_t bus_message;
+    
     while (1)
     {
         uint8_t bytes[3];
@@ -454,6 +472,9 @@ static void AppSciPxGetSend(uint8_t stairsnbr)
         }
     }
 }
+/*--------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------*/
+/*--------------------------------------------------------------------------------------------------------------------*/
 /**********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -465,6 +486,7 @@ void AppSciInit(void)
 
     for (i = 0; i < CONFIG_MAX_NBR_STAIRS; i++)
     {
+        stairs[i].config = false;
         stairs[i].publish.mux = MUX_PUBLISH;
         stairs[i].publish.length = 1;
         stairs[i].publish.crc = 0;
@@ -520,8 +542,26 @@ void AppSciInit(void)
     ESP_LOGI(TAG, "Init Sci Done");
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
-void AppSciConfigStair(uint8_t address, bool has_px)
+bool AppSciSetupStair(uint8_t stair_number)
 {
+    idx_setupstair = stair_number - 1;
+    if(stairs[idx_setupstair].config == true)               //Publish received from 1st free strip
+    {
+        uint8_t *data = (uint8_t *)malloc(BUF_SIZE);
+        uint8_t bytes[11];
+        bytes[0] = stairs[idx_setupstair].publishconfirm.mux;
+        for(int i=1; i<=9; i++)
+        {
+            bytes[i]=stairs[idx_setupstair].publishconfirm.mui[i-1];
+        }
+        bytes[10] = MUX_PUBLISH_CONFIRM_STAIR_NR(stair_number) | MUX_PUBLISH_CONFIRM_OK;
+
+        // Write data back to the UART
+        uart_write_bytes(uart_num, bytes, 11);
+        print_hex("Versturen: ", bytes, 11);
+        return true;
+    }
+    return false;
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 void AppSciPxStartUp(void)
@@ -544,10 +584,6 @@ void AppSciPxStartUp(void)
             }
         }
     }
-}
-/*--------------------------------------------------------------------------------------------------------------------*/
-void AppSciConfigHandler(void)
-{
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 void AppSciHandler(void)
