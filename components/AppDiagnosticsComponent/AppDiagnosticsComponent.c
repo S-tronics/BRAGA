@@ -37,15 +37,17 @@
 
 #include "esp_log.h"
 #include "sdkconfig.h"
-#include "AppDiagnosticsComponent.h"
-#include "AppDeviceComponent.h"
-#include "AppMQTTComponent.h"
+
 #include "cJSON.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "freertos/queue.h"
+
+#include "AppDeviceComponent.h"
+#include "AppMQTTComponent.h"
+#include "AppDiagnosticsComponent.h"
 /**********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -217,9 +219,10 @@ static void AppDiagnostics_device_meas_task(void *arg)
                 AppDevice_CtrlPeripheral(false);
             }
         }
+        //1000ms = 1 second
+        vTaskDelay((CONFIG_MEAS_INTERVAL_SECONDS * 1000) / portTICK_RATE_MS);
     }
-    //1000ms = 1 second
-    vTaskDelay((CONFIG_MEAS_INTERVAL_SECONDS * 1000) / portTICK_RATE_MS);
+    
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 
@@ -232,10 +235,10 @@ void AppDiagnostics_init()
 {
     ESP_LOGI(TAG, "AppDiagnostics_init");
 
-    xTaskCreate(AppDiagnostics_device_keep_alive_task, "AppDiagnostics_device_keep_alive_task", 4096, NULL, 10, NULL);
-    xTaskCreate(AppDiagnostics_free_ram_task, "AppDiagnostics_device_keep_alive_task", 4096, NULL, 10, NULL);
-    xTaskCreate(AppDiagnostics_device_logging_task, "AppDiagnostics_device_logging_task", 4096, NULL, 10, NULL);
-    xTaskCreate(AppDiagnostics_device_meas_task, "AppDiagnostics_device_meas.task", 4096, NULL, 10, NULL);
+    //xTaskCreate(AppDiagnostics_device_keep_alive_task, "AppDiagnostics_device_keep_alive_task", 4096, NULL, 10, NULL);
+    //xTaskCreate(AppDiagnostics_free_ram_task, "AppDiagnostics_device_keep_alive_task", 4096, NULL, 10, NULL);
+    //xTaskCreate(AppDiagnostics_device_logging_task, "AppDiagnostics_device_logging_task", 4096, NULL, 10, NULL);
+    //xTaskCreate(AppDiagnostics_device_meas_task, "AppDiagnostics_device_meas.task", 4096, NULL, 10, NULL);
     AppDiagnostics_SetLimitsCurrent(CONFIG_CURRENT_UPPER_LIMIT, CONFIG_CURRENT_LOWER_LIMIT);
     AppDiagnostics_SetLimitsVoltage(CONFIG_VOLTAGE_UPPER_LIMIT, CONFIG_VOLTAGE_LOWER_LIMIT);
 }

@@ -115,13 +115,14 @@ static const char *TAG = "DRV I2C";
 /***********************************************************************************************************************
 ; E X P O R T E D   F U N C T I O N S
 ;---------------------------------------------------------------------------------------------------------------------*/
-void DrvI2cInit(void)
+void drvI2c_init(void)
 {
     int i2c_master_port = I2C_MASTER_NUM;
 
     esp_log_level_set(TAG, ESP_LOG_INFO);
     ESP_LOGI(TAG, "Init I2c Driver");
-
+    i2c_mode_t  conf = I2C_MODE_MASTER;
+    
     i2c_config_t i2cbus =
     {
         .mode = I2C_MODE_MASTER,
@@ -129,15 +130,15 @@ void DrvI2cInit(void)
         .scl_io_num = I2C_MASTER_SCL,
         .sda_pullup_en = GPIO_PULLUP_ENABLE,
         .scl_pullup_en = GPIO_PULLUP_ENABLE,
-        .master.clk_speed = I2C_MASTER_FREQ_HZ;
+        .master.clk_speed = I2C_MASTER_FREQ_HZ
     };
     i2c_param_config(i2c_master_port, &i2cbus);
 
-    i2c_driver_install(i2c_master_port, conf.mode, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
+    i2c_driver_install(i2c_master_port, conf, I2C_MASTER_RX_BUF_DISABLE, I2C_MASTER_TX_BUF_DISABLE, 0);
     ESP_LOGI(TAG, "Init I2c Driver Done");
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
-void esp_err_t DrvI2cWriteByte(uint8_t slaveaddress, uint16_t reg, uint8_t data)
+esp_err_t drvI2C_write_byte(uint8_t slaveaddress, uint16_t reg, uint8_t data)
 {
     uint8_t write_buf[3];
     write_buf[0] = (uint8_t)(reg >> 8);
@@ -146,15 +147,15 @@ void esp_err_t DrvI2cWriteByte(uint8_t slaveaddress, uint16_t reg, uint8_t data)
     return i2c_master_write_to_device(I2C_MASTER_NUM, slaveaddress, write_buf, sizeof(write_buf), I2C_MASTER_TIMEOUT_MS/ portTICK_RATE_MS);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
-void esp_err_t DrvI2cReadByte(uint8_t slaveaddress, uint16_t reg, uint8_t* data)
+esp_err_t drvI2C_read_byte(uint8_t slaveaddress, uint16_t reg, uint8_t* data)
 {
     uint8_t write_buf[2];
     write_buf[0] = (uint8_t)(reg >> 8);
     write_buf[1] = (uint8_t)(reg & 0x00FF);
-    return i2c_master_write_read_device(I2C_MASTER_NUM, slaveaddres, &write_buf, 2, data, 1, I2C_MASTER_TIMEOUT_MS/ portTICK_RATE_MS);
+    return i2c_master_write_read_device(I2C_MASTER_NUM, slaveaddress, &write_buf, 2, data, 1, I2C_MASTER_TIMEOUT_MS/ portTICK_RATE_MS);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
-void esp_err_t DrvI2cWriteData(uint8_t slaveaddress, uint16_t start_reg, uint8_t* data, uint8_t length)
+esp_err_t drvI2C_write_data(uint8_t slaveaddress, uint16_t start_reg, uint8_t* data, uint8_t length)
 {
     uint8_t temp = 0;
     uint8_t write_buf[258];
@@ -168,10 +169,10 @@ void esp_err_t DrvI2cWriteData(uint8_t slaveaddress, uint16_t start_reg, uint8_t
             write_buf[i+1] = *data;
         }
     }
-    i2c_master_write_to_device(I2C_MASTER_NUM, slaveaddress, write_buf, length, I2C_MASTER_TIMEOUT_MS/ portTICK_RATE_MS);
+    return i2c_master_write_to_device(I2C_MASTER_NUM, slaveaddress, write_buf, length, I2C_MASTER_TIMEOUT_MS/ portTICK_RATE_MS);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
-void esp_err_t DrvI2cReadData(uint8_t slaveaddress, uint16_t start_reg, uint8_t* data, uint8_t length)
+esp_err_t drvI2C_read_data(uint8_t slaveaddress, uint16_t start_reg, uint8_t* data, uint8_t length)
 {
     uint8_t write_buf[2];
     write_buf[0] = (uint8_t)(start_reg >> 8);

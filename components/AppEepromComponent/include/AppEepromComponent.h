@@ -24,7 +24,7 @@
 /***********************************************************************************************************************
 ; I N C L U D E S
 ;---------------------------------------------------------------------------------------------------------------------*/
-
+#include "AppSciComponent.h"
 /**********************************************************************************************************************/
 
 
@@ -39,7 +39,13 @@
 /***********************************************************************************************************************
 ; E X P O R T E D   T Y P E D E F S
 ;---------------------------------------------------------------------------------------------------------------------*/
-
+typedef enum
+{
+    SSID = 0,
+    PASSW = 1,
+    STAIRS = 2,
+}
+CONFIG_DONE;
 /**********************************************************************************************************************/
 
 
@@ -61,6 +67,84 @@
  */
 void appeeprom_init(void);
 
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
+void appeeprom_write_wifiSSID(char* ssid);
+
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
+void appeeprom_write_wifipassword(char* passwrd);
+
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
+void appeeprom_write_stairstaken(uint32_t stairs_taken);
+
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
+void appeeprom_write_configdone(CONFIG_DONE config);
+
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
+void appeeprom_write_nbrofstairs(uint8_t stairs);
+
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
+void appeeprom_increment_overcurrent(void);
+
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
+void appeeprom_increment_undercurrent(void);
+
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
+void appeeprom_increment_overvoltage(void);
+
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
+void appeeprom_increment_undervoltage(void);
+
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
+void appeeprom_write_stairsconfig(APPSCISTAIR* stairs);
+
+/**
+ * @brief   Initialise function for this module
+ *
+ *
+ */
+void appeeprom_read_stairsconfig(APPSCISTAIR* stairs);
+
+
 /**********************************************************************************************************************/
 
 
@@ -72,4 +156,4 @@ void appeeprom_init(void);
 
 
 
-#endif /* APPTEMPLATE_H */
+#endif /* APPEEPROMCOMPONENT_H */

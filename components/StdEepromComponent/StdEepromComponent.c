@@ -55,7 +55,7 @@
 /***********************************************************************************************************************
 ; L O C A L   D E F I N I T I O N S   A N D   M A C R O S
 ;---------------------------------------------------------------------------------------------------------------------*/
-#define I2C_ADDRESS 0x50;
+#define I2C_ADDRESS     0x50
 /**********************************************************************************************************************/
 
 
@@ -121,14 +121,14 @@ void stdeeprom_read_byte(uint16_t address, uint8_t* data)
     drvI2C_read_byte(I2C_ADDRESS, address, data);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
-void stdeeprom_read_data(uint16-t address, uint8_t* data, uint8_t length)
+void stdeeprom_read_data(uint16_t address, uint8_t* data, uint8_t length)
 {
-    drvI2C_read_data(I2C_ADDRESS, address, data, uint8_t length);
+    drvI2C_read_data(I2C_ADDRESS, address, data, length);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 void stdeeprom_write_byte(uint16_t address, uint8_t* data)
 {
-    drvI2C_write_byte(I2C_ADDRESS, address, data);
+    drvI2C_write_byte(I2C_ADDRESS, address, *data);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 void stdeeprom_write_data(uint16_t address, uint8_t* data, uint8_t length)

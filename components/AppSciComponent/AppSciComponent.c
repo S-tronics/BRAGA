@@ -537,7 +537,7 @@ void AppSciInit(void)
     // xTaskCreate(uart_write_task, "uart_write_task", UART_STACK_SIZE, NULL, 10, NULL);
     // xTaskCreate(uart_write_rainbow_task, "uart_write_rainbow_task", UART_STACK_SIZE, NULL, 10, NULL);
     // xTaskCreate(uart_write_white_task, "uart_write_white_task", UART_STACK_SIZE, NULL, 10, NULL);
-    xTaskCreate(uart_write_px_get, "uart_write_px_get", UART_STACK_SIZE, NULL, 10, NULL);
+    //xTaskCreate(uart_write_px_get, "uart_write_px_get", UART_STACK_SIZE, NULL, 10, NULL);
 
     ESP_LOGI(TAG, "Init Sci Done");
 }

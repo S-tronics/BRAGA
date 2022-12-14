@@ -64,7 +64,7 @@ void stdeeprom_init(void);
 
 void stdeeprom_read_byte(uint16_t address, uint8_t* data);
 
-void stdeeprom_read_data(uint16-t address, uint8_t* data, uint8_t length);
+void stdeeprom_read_data(uint16_t address, uint8_t* data, uint8_t length);
 
 void stdeeprom_write_byte(uint16_t address, uint8_t* data);
 
@@ -78,7 +78,5 @@ void stdeeprom_write_data(uint16_t address, uint8_t* data, uint8_t length);
 ; E X P O R T E D   S T A T I C   I N L I N E   F U N C T I O N S
 ;---------------------------------------------------------------------------------------------------------------------*/
 /**********************************************************************************************************************/
-
-
 
 #endif /* STDEEPROM_H */

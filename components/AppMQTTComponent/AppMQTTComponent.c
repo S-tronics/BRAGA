@@ -210,7 +210,7 @@ static void AppMqtt_event_handler(void *handler_args, esp_event_base_t base, int
 /***********************************************************************************************************************
 ; E X P O R T E D   F U N C T I O N S
 ;---------------------------------------------------------------------------------------------------------------------*/
-void AppMQT_client_Init()
+void AppMQTT_client_Init()
 {
 
     AppDevice_get_unique(mac_str);

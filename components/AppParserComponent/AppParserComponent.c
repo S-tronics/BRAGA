@@ -36,12 +36,13 @@
 #include "esp_log.h"
 #include "cJSON.h"
 #include "sdkconfig.h"
-#include "AppParserComponent.h"
 #include "AppDeviceComponent.h"
 #include "AppOTAComponent.h"
 #include "AppSciComponent.h"
 #include "AppSetupComponent.h"
 #include "AppDiagnosticsComponent.h"
+#include "AppParserComponent.h"
+
 /**********************************************************************************************************************/
 
 /***********************************************************************************************************************
@@ -317,6 +318,7 @@ void AppParser_parse_setup(char *json_string)
         {
         case 1:
             ESP_LOGI(TAG, "Stair procedure: 1 - Stair procedure 1");
+            AppSetup_execute(1, (PROCEDURE)stair_procedure->valueint);            //Command from Client
             break;
         case 2:
             ESP_LOGI(TAG, "Stair procedure: 2 - Stair procedure 2");

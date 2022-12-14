@@ -59,31 +59,31 @@
  *
  *
  */
-void DrvI2cInit(void);
+void drvI2C_init(void);
 
 /**
  * @brief   Write a byte over I2C-bus to the selected I2C-register
  *
  */
-void esp_err_t DrvI2cWriteByte(uint8_t slaveaddress, uint16_t reg, uint8_t data);
+esp_err_t drvI2C_write_byte(uint8_t slaveaddress, uint16_t reg, uint8_t data);
 
 /**
  * @brief   Write an array of data over I2c-bis to the selected I2C-register 
  *
  */
-void esp_err_t DrvI2cReadByte(uint8_t slaveaddress, uint16_t reg, uint8_t* data);
+esp_err_t drvI2C_read_byte(uint8_t slaveaddress, uint16_t reg, uint8_t* data);
 
 /**
  * @brief   Write an array of data over I2c-bus to the selected I2C-register 
  *
  */
-void esp_err_t DrvI2cWriteData(uint8_t slaveaddress, uint16_t start_reg, uint8_t* data, uint8_t length);
+esp_err_t drvI2C_write_data(uint8_t slaveaddress, uint16_t start_reg, uint8_t* data, uint8_t length);
 
 /**
  * @brief   Read an array of data over I2C-bus to the selected I2c-register
  *
  */
-void esp_err_t DrvI2cReadData(uint8_t slaveaddress, uint16_t start_reg, uint8_t* data, uint8_t length);
+esp_err_t drvI2C_read_data(uint8_t slaveaddress, uint16_t start_reg, uint8_t* data, uint8_t length);
 
 /**********************************************************************************************************************/
 

@@ -55,6 +55,7 @@
 
 //STANDARD lib include section
 //APPLICATION lib include section
+#include "AppParserComponent.h"
 #include "AppBluetooth.h"
 /**********************************************************************************************************************/
 
@@ -204,6 +205,8 @@ static struct gatts_profile_inst gl_profile_tab[PROFILE_NUM] = {
 };
 static prepare_type_env_t a_prepare_write_env;
 
+static esp_gatt_rsp_t rsp;          //Response on reading a characteristic
+static bool           rsp_available = false;
 /**********************************************************************************************************************/
 
 
@@ -226,20 +229,6 @@ static prepare_type_env_t a_prepare_write_env;
 static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
 {
     switch (event) {
-#ifdef CONFIG_SET_RAW_ADV_DATA
-    case ESP_GAP_BLE_ADV_DATA_RAW_SET_COMPLETE_EVT:
-        adv_config_done &= (~adv_config_flag);
-        if (adv_config_done==0){
-            esp_ble_gap_start_advertising(&adv_params);
-        }
-        break;
-    case ESP_GAP_BLE_SCAN_RSP_DATA_RAW_SET_COMPLETE_EVT:
-        adv_config_done &= (~scan_rsp_config_flag);
-        if (adv_config_done==0){
-            esp_ble_gap_start_advertising(&adv_params);
-        }
-        break;
-#else
     case ESP_GAP_BLE_ADV_DATA_SET_COMPLETE_EVT:
         adv_config_done &= (~adv_config_flag);
         if (adv_config_done == 0){
@@ -252,7 +241,6 @@ static void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param
             esp_ble_gap_start_advertising(&adv_params);
         }
         break;
-#endif
     case ESP_GAP_BLE_ADV_START_COMPLETE_EVT:
         //advertising start complete event to indicate advertising start successfully or failed
         if (param->adv_start_cmpl.status != ESP_BT_STATUS_SUCCESS) {
@@ -350,18 +338,6 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         if (set_dev_name_ret){
             ESP_LOGE(TAG, "set device name failed, error code = %x", set_dev_name_ret);
         }
-#ifdef CONFIG_SET_RAW_ADV_DATA
-        esp_err_t raw_adv_ret = esp_ble_gap_config_adv_data_raw(raw_adv_data, sizeof(raw_adv_data));
-        if (raw_adv_ret){
-            ESP_LOGE(TAG, "config raw adv data failed, error code = %x ", raw_adv_ret);
-        }
-        adv_config_done |= adv_config_flag;
-        esp_err_t raw_scan_ret = esp_ble_gap_config_scan_rsp_data_raw(raw_scan_rsp_data, sizeof(raw_scan_rsp_data));
-        if (raw_scan_ret){
-            ESP_LOGE(TAG, "config raw scan rsp data failed, error code = %x", raw_scan_ret);
-        }
-        adv_config_done |= scan_rsp_config_flag;
-#else
         //config adv data
         esp_err_t ret = esp_ble_gap_config_adv_data(&adv_data);
         if (ret){
@@ -374,47 +350,52 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         //     ESP_LOGE(TAG, "config scan response data failed, error code = %x", ret);
         // }
         // adv_config_done |= scan_rsp_config_flag;
-
-#endif
         esp_ble_gatts_create_service(gatts_if, &gl_profile_tab[PROFILE_A_APP_ID].service_id, GATTS_NUM_HANDLE_TEST_A);
         break;
     case ESP_GATTS_READ_EVT: {
         ESP_LOGI(TAG, "GATT_READ_EVT, conn_id %d, trans_id %d, handle %d\n", param->read.conn_id, param->read.trans_id, param->read.handle);
-        esp_gatt_rsp_t rsp;
-        memset(&rsp, 0, sizeof(esp_gatt_rsp_t));
+        //esp_gatt_rsp_t rsp;
+        //memset(&rsp, 0, sizeof(esp_gatt_rsp_t));
         rsp.attr_value.handle = param->read.handle;
 
-        static char control_topic[100];
+        if(rsp_available)
+        {
+            ESP_LOGI(TAG, "Respond");
+            esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id,
+                                    ESP_GATT_OK, &rsp);
+            rsp_available = false;
+            ESP_LOGI(TAG, "Responded");
+        }
+        //static char control_topic[100];
         //static char reply_topic[100];
 
-        sprintf(control_topic, "%s", "{Answer:ESP32}");
+        //sprintf(control_topic, "%s", "{Answer:ESP32}");
         
-        rsp.attr_value.len = strlen(control_topic);
-        int i = 0;
-        for(i = 0; i < strlen(control_topic); i++)
-        {
-            rsp.attr_value.value[i] = control_topic[i];
-        }
+        //rsp.attr_value.len = strlen(control_topic);
+        //int i = 0;
+        //for(i = 0; i < strlen(control_topic); i++)
+        // {
+        //     rsp.attr_value.value[i] = control_topic[i];
+        // }
         //rsp.attr_value.value = "{Answer:ESP32}";
         // rsp.attr_value.value[0] = 0xde;
         // rsp.attr_value.value[1] = 0xed;
         // rsp.attr_value.value[2] = 0xbe;
         // rsp.attr_value.value[3] = 0xef;
-        esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id,
-                                    ESP_GATT_OK, &rsp);
-
-        uint8_t var[4] = {0x00, 0x01, 0x02, 0x03};
+        // esp_ble_gatts_send_response(gatts_if, param->read.conn_id, param->read.trans_id,
+        //                            ESP_GATT_OK, &rsp);
         ESP_LOGI(TAG, "GATT_SET_ATT, handle %d\n", gl_profile_tab[PROFILE_A_APP_ID].char_handle);
-        esp_ble_gatts_set_attr_value(gl_profile_tab[PROFILE_A_APP_ID].char_handle, 4, var);
+        //esp_ble_gatts_set_attr_value(gl_profile_tab[PROFILE_A_APP_ID].char_handle, 4, var);
         break;
     }
     case ESP_GATTS_WRITE_EVT: {
         ESP_LOGI(TAG, "GATT_WRITE_EVT, conn_id %d, trans_id %d, handle %d", param->write.conn_id, param->write.trans_id, param->write.handle);
         if (!param->write.is_prep){
             ESP_LOGI(TAG, "GATT_WRITE_EVT, value len %d, value :", param->write.len);
-            esp_log_buffer_hex(TAG, param->write.value, param->write.len);
+            //esp_log_buffer_hex(TAG, param->write.value, param->write.len);
 
             ESP_LOGI(TAG, "Received JSON Data:%s", (char*)param->write.value);
+            AppParser_parse_setup((char*)param->write.value);
             
             if (gl_profile_tab[PROFILE_A_APP_ID].descr_handle == param->write.handle && param->write.len == 2){
                 uint16_t descr_value = param->write.value[1]<<8 | param->write.value[0];
@@ -452,7 +433,8 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
 
             }
         }
-        example_write_event_env(gatts_if, &a_prepare_write_env, param);
+        esp_ble_gatts_send_response(gatts_if, param->write.conn_id, param->write.trans_id, ESP_GATT_OK, NULL);
+        //example_write_event_env(gatts_if, &a_prepare_write_env, param);
         break;
     }
     case ESP_GATTS_EXEC_WRITE_EVT:
@@ -472,7 +454,7 @@ static void gatts_profile_a_event_handler(esp_gatts_cb_event_t event, esp_gatt_i
         gl_profile_tab[PROFILE_A_APP_ID].char_uuid.uuid.uuid16 = GATTS_CHAR_UUID_TEST_A;
 
         esp_ble_gatts_start_service(gl_profile_tab[PROFILE_A_APP_ID].service_handle);
-        a_property = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE;
+        a_property = ESP_GATT_CHAR_PROP_BIT_READ | ESP_GATT_CHAR_PROP_BIT_WRITE | ESP_GATT_CHAR_PROP_BIT_NOTIFY;
         esp_err_t add_char_ret = esp_ble_gatts_add_char(gl_profile_tab[PROFILE_A_APP_ID].service_handle, &gl_profile_tab[PROFILE_A_APP_ID].char_uuid,
                                                         ESP_GATT_PERM_READ | ESP_GATT_PERM_WRITE,
                                                         a_property,
@@ -661,7 +643,18 @@ void AppBluetooth_Init(void)
 /*--------------------------------------------------------------------------------------------------------------------*/
 void AppBTLE_server_publish_setup(char *data)
 {
-    
+    ESP_LOGI(TAG, "Publish for setup: %d", (uint16_t)strlen(data));
+
+    memset(&rsp, 0, sizeof(esp_gatt_rsp_t));
+    rsp.attr_value.len = strlen(data);
+    ESP_LOGI(TAG, "Data: %s", data);
+    int i = 0;
+    for(i = 0; i < strlen(data); i++)
+    {
+        rsp.attr_value.value[i] = data[i];
+    }
+    rsp_available = true;
+    //free(rsp);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
 

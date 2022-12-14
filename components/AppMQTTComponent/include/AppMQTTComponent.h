@@ -49,7 +49,7 @@
  *
  *
  */
-void AppMQT_client_Init();
+void AppMQTT_client_Init();
 
 /**
  * @brief Function that wraps around the MQTT esp client library

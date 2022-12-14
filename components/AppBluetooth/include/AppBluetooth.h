@@ -74,5 +74,5 @@ void AppBTLE_server_publish_setup(char *data);
 
 
 
-#endif /* APPBLUETOOTH_H */
+#endif /* APPBluetoothComponent_H */
 

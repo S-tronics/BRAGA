@@ -1,6 +1,6 @@
 /**********************************************************************************************************************/
 /**
- * @file        AppParrserComponent.h
+ * @file        AppParserComponent.h
  *
  * @author      Stijn Vermeersch
  * @date        06.07.2022

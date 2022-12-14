@@ -3,7 +3,6 @@
 #include <stddef.h>
 #include <string.h>
 
-
 #include "AppMQTTComponent.h"
 #include "AppDeviceComponent.h"
 #include "AppOTAComponent.h"
@@ -81,7 +80,8 @@ void app_main(void)
 
     AppDeviceInit();
     AppColor_Init();
-    AppMQT_client_Init();
+    //AppMQTT_client_Init();
+    AppSetup_init();
     AppDiagnostics_init();
     AppSciInit();
     AppBluetooth_Init();

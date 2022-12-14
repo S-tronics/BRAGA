@@ -51,7 +51,7 @@ typedef enum PROCEDURES
 /***********************************************************************************************************************
 ; E X P O R T E D   F U N C T I O N   P R O T O T Y P E S
 ;---------------------------------------------------------------------------------------------------------------------*/
-
+void AppSetup_init(void);
 /**
  * @brief   Function to reset isntallation procedure
  *
@@ -68,6 +68,14 @@ void AppSetup_reset_installation();
  * @param   value           Some value to send with the message
  */
 void AppSetup_setup_message(int stair_number, PROCEDURE p, uint8_t value);
+
+/**
+ * @brief   Not implemented
+ *
+ * @param   stair_number    The stair number that will be sent in JSON
+ * @param   p               The procedure that will be sent in JSON, see PROCEDURE enum
+ */
+void AppSetup_execute(int stair_number, PROCEDURE p);            //Command from Client
 /**********************************************************************************************************************/
 
 /***********************************************************************************************************************

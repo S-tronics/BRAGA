@@ -46,7 +46,9 @@
 //DRIVER lib include section
 
 //STANDARD lib include section
+#include "StdEepromComponent.h"
 //APPLICATION lib include section
+#include "AppSciComponent.h"
 #include "AppEepromComponent.h"
 /**********************************************************************************************************************/
 
@@ -55,6 +57,8 @@
 /***********************************************************************************************************************
 ; L O C A L   D E F I N I T I O N S   A N D   M A C R O S
 ;---------------------------------------------------------------------------------------------------------------------*/
+#define MAX_NBR_STAIRS              CONFIG_MAX_NBR_STAIRS
+#define SMART                       7
 #define ADDR_SSID                   0x0000
 #define ADDR_PASSW                  0x0020
 #define ADDR_STAIRSTAKEN            0x0040
@@ -127,25 +131,22 @@ void appeeprom_init(void)
 {
     esp_log_level_set(TAG, ESP_LOG_INFO);
     ESP_LOGI(TAG, "Init Eeprom");
-
-
-
     ESP_LOGI(TAG, "Init Eeprom");
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
-void appeeprom_write_wifiSSID(const char* ssid)
+void appeeprom_write_wifiSSID(char* ssid)
 {
     uint8_t length = strlen(ssid);
 
-    stdeeprom_write_data(ADDR_SSID, ssid, length);
+    stdeeprom_write_data(ADDR_SSID, (uint8_t*)ssid, length);
     ESP_LOGI(TAG, "EEprom Store: SSID: %d", length);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
-void appeeprom_write_wifipassword(const char* passwrd)
+void appeeprom_write_wifipassword(char* passwrd)
 {
-    uint8_t length = strlen(ssid);
+    uint8_t length = strlen(passwrd);
 
-    stdeeprom_write_data(ADDR_PASSW, passwrd, length);
+    stdeeprom_write_data(ADDR_PASSW, (uint8_t*)passwrd, length);
     ESP_LOGI(TAG, "EEprom Store: PASSWRD: %d", length);
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
@@ -203,7 +204,88 @@ void appeeprom_increment_undercurrent(void)
     stdeeprom_write_data(ADDR_UNDERCURRENT, r_data, sizeof(r_data));
 }
 /*--------------------------------------------------------------------------------------------------------------------*/
+void appeeprom_increment_overvoltage(void)
+{
+    static uint8_t r_data[4];
+    stdeeprom_read_data(ADDR_OVERVOLTAGE, r_data, sizeof(r_data));
+    overvoltage = (r_data[0] << 24) | (r_data[1] << 16) | (r_data[2] << 8) | r_data[3];
+    overvoltage++;
+    r_data[0] = (uint8_t)(overvoltage >> 24);
+    r_data[1] = (uint8_t)(overvoltage >> 16);
+    r_data[2] = (uint8_t)(overvoltage >> 8);
+    r_data[3] = (uint8_t)(overvoltage & 0x000000FF);
+    stdeeprom_write_data(ADDR_OVERVOLTAGE, r_data, sizeof(r_data));
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+void appeeprom_increment_undervoltage(void)
+{
+    static uint8_t r_data[4];
+    stdeeprom_read_data(ADDR_UNDERVOLTAGE, r_data, sizeof(r_data));
+    undervoltage = (r_data[0] << 24) | (r_data[1] << 16) | (r_data[2] << 8) | r_data[3];
+    undervoltage++;
+    r_data[0] = (uint8_t)(undervoltage >> 24);
+    r_data[1] = (uint8_t)(undervoltage >> 16);
+    r_data[2] = (uint8_t)(undervoltage >> 8);
+    r_data[3] = (uint8_t)(undervoltage & 0x000000FF);
+    stdeeprom_write_data(ADDR_UNDERVOLTAGE, r_data, sizeof(r_data));
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+void appeeprom_write_stairsconfig(APPSCISTAIR* stairs)
+{
+    uint8_t i = 0;
+    APPSCISTAIR* stair;
+    static uint8_t data = 0x00;
 
+    for(i = 0; i < MAX_NBR_STAIRS; i++)
+    {
+        stair = &stairs[i];
+        if(stair->has_px)
+        {
+            stdeeprom_read_byte(ADDR_STAIRS_CONFIG_START + (i * 16), &data);
+            data |= (1 << SMART);
+            stdeeprom_write_byte(ADDR_STAIRS_CONFIG_START + (i * 16), &data);
+        }
+        //RED
+        data = stair->colorset.data[1]; 
+        stdeeprom_write_byte(ADDR_STAIRS_CONFIG_START + 1 + (i * 16), &data);
+        //GRN
+        data = stair->colorset.data[2];
+        stdeeprom_write_byte(ADDR_STAIRS_CONFIG_START + 2 + (i * 16), &data);
+        //BLUE
+        data = stair->colorset.data[3];
+        stdeeprom_write_byte(ADDR_STAIRS_CONFIG_START + 3 + (i * 16), &data);
+        //WHITE
+        data = stair->colorset.data[0];
+        stdeeprom_write_byte(ADDR_STAIRS_CONFIG_START + 4 + (i * 16), &data);
+    }
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
+void appeeprom_read_stairsconfig(APPSCISTAIR* stairs)
+{
+    uint8_t i = 0;
+    APPSCISTAIR* stair;
+    static uint8_t data = 0x00;
+    for(i = 0; i < MAX_NBR_STAIRS; i++)
+    {
+        stair = &stairs[i];
+        stdeeprom_read_byte(ADDR_STAIRS_CONFIG_START + (i * 16), &data);
+        if((data & 0x01) == 0x01)   stair->has_px = true;
+        else                        stair->has_px = false;
+        //RED
+        stdeeprom_read_byte(ADDR_STAIRS_CONFIG_START + 1 + (i * 16), &data);
+        stair->colorset.data[1] = data;
+        //GRN
+        stdeeprom_read_byte(ADDR_STAIRS_CONFIG_START + 2 + (i * 16), &data);
+        stair->colorset.data[2] = data;
+        //BLUE
+        stdeeprom_read_byte(ADDR_STAIRS_CONFIG_START + 3 + (i * 16), &data);
+        stair->colorset.data[3] = data;
+        //WHITE
+        stdeeprom_read_byte(ADDR_STAIRS_CONFIG_START + 4 + (i * 16), &data);
+        stair->colorset.data[0] = data;
+    }
+}
+/*--------------------------------------------------------------------------------------------------------------------*/
 /*--------------------------------------------------------------------------------------------------------------------*/
 
 /*--------------------------------------------------------------------------------------------------------------------*/

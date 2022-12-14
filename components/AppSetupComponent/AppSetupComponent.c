@@ -137,6 +137,7 @@ void AppSetup_setup_message(int stair_number, PROCEDURE p, uint8_t value)
     cJSON_AddItemToObject(root, "value", cJSON_CreateNumber(value));
 
     out = cJSON_Print(root);
+
     //AppMQTT_client_publish_diagnostics(out, 2, 0);
     AppBTLE_server_publish_setup(out);
      /* free all objects under root and root itself */
@@ -149,11 +150,12 @@ void AppSetup_execute(int stair_number, PROCEDURE p)            //Command from C
     switch(p)
     {
         case START_INSTALLATION:
+            AppSetup_setup_message(stair_number, LED_CONNECTED, 0);
             break;
         case LED_CONNECTED:
             AppDevice_CtrlPeripheral(true);
             ets_delay_us(500);                  //Wait until everything is startet up
-            xTaskCreate(setuptask, "setuptask", 4096, NULL, 10, &xHandleSetup);
+            //xTaskCreate(setuptask, "setuptask", 4096, NULL, 10, &xHandleSetup);
             stair_number_latch = stair_number;
             break;
         case STOP_INSTALLATION:
